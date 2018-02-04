@@ -5,7 +5,7 @@
 	$output = curl_exec($ch); 
 	curl_close($ch);
 	
-	$out = fopen("scamlistrip.js", "w");
+	$out = fopen("scamlistrip.js", "w"); //i was too lazy to actually remove the scraper, so i just changed its output file xd
 	fwrite($out,'var scams=["0x2Fa0ac498D01632f959D3C18E38f4390B005e200"');
 	
 	$minval=9999999;
