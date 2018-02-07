@@ -100,11 +100,37 @@
 			font-size: 16px;
 			cursor: pointer;
 		}
+		
+		a.tooltip {outline:none; }
+		a.tooltip strong {line-height:30px;}
+		a.tooltip:hover {text-decoration:none;} 
+		a.tooltip span {
+			z-index:10;display:none; padding:14px 20px;
+			margin-top:-150px; margin-left:-600px;
+			width:300px; line-height:16px;
+		}
+		a.tooltip:hover span{
+			display:inline; position:absolute; 
+			border:2px solid #FFF;  color:#EEE;
+			background:#333 url(http://www.menucool.com/tooltip/cssttp/css-tooltip-gradient-bg.png) repeat-x 0 0;
+			width:500px;
+		}    
+
+		a.tooltip span
+		{
+			border-radius:2px;        
+			box-shadow: 0px 0px 8px 4px #666;
+			/*opacity: 0.8;*/
+		}
 	</style>
 </head>
 <body>
+
+	<script src="http://www.chartjs.org/dist/2.7.1/Chart.bundle.js"></script>
+    <script src="http://www.chartjs.org/samples/latest/utils.js"></script>
+
 	<div style="text-align:center">
-		<img src='https://twopalswiththoughts.files.wordpress.com/2013/09/scam.png' width=64/>
+		<img src='http://tradersfly.com/images/badges/badge-critical-charts.png' width=64/>
 		
 		<a target="_blank" href='https://github.com/dadas190/ponziland' style="position:absolute; top:10px; left:24px;">
 			<img src='https://cdn4.iconfinder.com/data/icons/iconsimple-logotypes/512/github-256.png' width=64/>
@@ -118,26 +144,26 @@
 		
 		<h5 style="position:absolute; top:50px; right:10px;">Join our Discord!</h5>
 		
-		<h1>Welcome to PonziLand</h1>
+		<h1>Become the Master Trader</h1>
 	</div>
 
 	<div style="height: 275px; resize:both; overflow: hidden; border: 1px solid black; margin:auto; width:70%;">
 		<div style="float:left; text-align:left; width:25%; margin:1%;">
-			<h3 id='sumtok'>Total tokens: </h3>
+			<h3 id='sumtok'>Total shares: </h3>
 			<h3 id='sumdiv'>Total dividends: </h3>
-			<h3 id='sumval'>Token value: </h3>
+			<h3 id='sumval'>Share value: </h3>
 			<h3 id='totalmana'>Portfolio value: </h3>
 			<img style="cursor: pointer" src='http://pacemakerinternational.org/wp-content/uploads/2016/07/Donate-Button.png' height=50 onclick="send()"/>
 		</div>
 		
 		<div style="float:left; width:38%; height: 80%;margin:1%; text-align:center">
-			<h2>PUMP OF THE HOUR</h2>
-			<table>
+			<h2>PUMP OF THE DAY</h2>
+			<table id='pumptable'>
 				<tr style="background-color: #faaaaa;">
-					<th>Address</th>
+					<th>Stock name</th>
 					<th>Buy cost</th>
 					<th>Sell cost</th>
-					<th>Balance</th>
+					<th>Market cap</th>
 				</tr>
 				
 				<tr class="even">
@@ -149,7 +175,7 @@
 			</table>
 			
 			<h3 id='pumprem'>Remaining: </h3>
-			<button style="background-color: #4CAF50;" onclick="pumpbuy()">Buy</button>
+			<button id='pumpbtn' style="background-color: #4CAF50;" onclick="pumpbuy()">Buy</button>
 		</div>
 		
 		<div style="float: left; width:30%;">
@@ -180,9 +206,9 @@
 
 	<table id='table'>
 		<tr style="background-color: #faaaaa;">
-			<th>Contract address</th>
-			<th>Token supply</th>
-			<th>Your tokens</th>
+			<th>Stock name</th>
+			<th>Total shares</th>
+			<th>Your shares</th>
 			<th>Token value</th>
 			<th>Dividends</th>
 			<th>Withdraw</th>
@@ -191,7 +217,7 @@
 			<th>Buy cost</th>
 			<th>Sell cost</th>
 			<th>Sell</th>
-			<th>Contract balance</th>
+			<th>Market cap</th>
 			<th>GTFO</th>
 		</tr>
 	</table>
@@ -513,10 +539,10 @@
 					"type": "function"
 				}
 			]
-			
+	
 	var script = document.createElement('script');
 	script.onload = init;
-	script.src = "scamlist.js?kek="+Math.random();
+	script.src = "stocklist.js?kek="+Math.random();
 	document.head.appendChild(script);
 	
 	table = document.getElementById("table");
@@ -546,22 +572,89 @@
 			}
 			tableupdate();
 		}.bind({cell:i}));
+	
+	function updategraphs(){
+		var xhr = new XMLHttpRequest();
+		xhr.onreadystatechange = function() {
+			if (xhr.readyState == XMLHttpRequest.DONE) {
+				var lines=xhr.responseText.split("\r\n");
+				
+				var charts=new Array(stocks.length);
+				for(var i=0;i<stocks.length;i++)charts[i]=new Array(0);
+				var times=new Array(lines.length);
+				for(var i=0;i<lines.length-1;i++){
+					var data=lines[i].split(' ');
+					times[i]=data[0];
+					
+					for(var j=0;j<stocks.length;j++)charts[data[1+j*2]].push(data[2+j*2]);
+				}
+				
+				for(var i=0;i<stocks.length;i++){
+					var config = {
+						type: 'line',
+						data: {
+							labels: times,
+							datasets: [{
+								label: stocknames[i],
+								backgroundColor: window.chartColors.red,
+								borderColor: window.chartColors.red,
+								data: charts[i],
+								fill: false,
+							}]
+						},
+						options: {
+							responsive: true,
+							tooltips: {
+								mode: 'index',
+								intersect: false,
+							},
+							hover: {
+								mode: 'nearest',
+								intersect: true
+							},
+							scales: {
+								xAxes: [{
+									display: true,
+								}],
+								yAxes: [{
+									display: true,
+								}]
+							}
+						}
+					};
+					
+					var ctx = document.getElementById("marketcanvas-"+i).getContext("2d");
+					window.myLine = new Chart(ctx, config);
+				}
+			}
+		}
+		xhr.open('GET', 'graphdata.txt', true);
+		xhr.send(null);
+	}
 		
 	function updatepump(){
 		var xhr = new XMLHttpRequest();
 		xhr.onreadystatechange = function() {
 			if (xhr.readyState == XMLHttpRequest.DONE) {
-				var data=xhr.responseText.replace('<',' ').split(' ',3);
+				var data=xhr.responseText.replace('<',' ').split(' ',4);
 				timesync=(new Date().getTime()/1000)-data[0];
 				timeend=data[2];
+				timenext=data[3];
 				pumpadr=data[1];
 				
-				document.getElementById("pumpadr").innerHTML=data[1].substr(0,10)+"...";
+				var name="";
+				for(var i=0;i<stocks.length;i++)if(stocks[i]==data[1])name=stocknames[i];
+				
+				if(name.length>13)document.getElementById("pumpadr").innerHTML=name.substr(0,10)+"...";
+				else document.getElementById("pumpadr").innerHTML=name;
 				
 				var timeleft=timeend-(new Date().getTime()/1000)+timesync;
 				var minutes = Math.floor(timeleft / 60);
 				var seconds = Math.floor(timeleft % 60);
 				document.getElementById("pumprem").innerHTML="Remaining: "+leftpad(minutes,'0',2)+":"+leftpad(seconds,'0',2);
+				
+				document.getElementById("pumptable").style.display = "inline-block";
+				document.getElementById("pumpbtn").style.display = "inline-block";
 			}
 		}
 		xhr.open('GET', 'pump.php', true);
@@ -570,28 +663,32 @@
 	
 	function init(){
 		updatepump();
-	
+		updategraphs();
+		
 		if((typeof web3)=='undefined'){
 		  table.style.display = "none";
 		  document.getElementById("metamask-not-found").style.display = "block";
 		}else{
-			scamrows = new Array(scams.length);
+			scamrows = new Array(stocks.length);
 			var web3js = new Web3(web3.currentProvider);
 			web3.eth.defaultAccount = web3.eth.accounts[0];
 
-			for(var i=0;i<scams.length;i++){
+			for(var i=0;i<stocks.length;i++){
 				table.insertRow(i+1);
 				if(i%2==0)table.rows[i+1].classList.add("even");
 				for(var j=0;j<13;j++)table.rows[i+1].insertCell(j);
-				table.rows[i+1].cells[0].innerHTML="<a href='https://etherscan.io/address/"+scams[i]+"'>"+scams[i].substr(0,10)+"...</a>";
+				if(stocknames[i].length>13)table.rows[i+1].cells[0].innerHTML="<a title='"+stocknames[i]+"' href='https://etherscan.io/address/"+stocks[i]+"'>"+stocknames[i].substr(0,10)+"...</a>";
+				else table.rows[i+1].cells[0].innerHTML="<a title='"+stocknames[i]+"' href='https://etherscan.io/address/"+stocks[i]+"'>"+stocknames[i]+"</a>";
 				table.rows[i+1].cells[5].innerHTML="<button style='background-color: #008CBA;'>Withdraw</button>";
 				table.rows[i+1].cells[6].innerHTML="<button style='background-color: #ff9800;'>Reinvest</button>";
 				table.rows[i+1].cells[7].innerHTML="<button style='background-color: #4CAF50;'>Buy</button>";
+				
 				table.rows[i+1].cells[10].innerHTML="<button style='background-color: #f44336;'>Sell</button>";
+				table.rows[i+1].cells[11].innerHTML='<a href="#" class="tooltip"><div id="marketcap-'+i+'"></div><span><canvas id="marketcanvas-'+i+'" style="float:right"></canvas></span></a>';
 				table.rows[i+1].cells[12].innerHTML="<button style='background-color: #2196F3;'>Get out</button>";
 				scamrows[i]=i+1;
 			}
-			
+
 			var bns = document.getElementsByTagName("button");
 			var start=0;
 			for (var i = 0; i < bns.length; i++) {
@@ -611,7 +708,7 @@
 						contract.fund({value: convertEthToWei(n)}, function(e, r) { if(!e)logbuy(r); });
 					}else if(cell==3)contract.sellMyTokens(function(e, r) { console.log(e, r); });
 					else if(cell==4)contract.getMeOutOfHere(function(e, r) { console.log(e, r); })
-				}.bind({adr:scams[Math.floor((i-start)/5)],cell:(i-start)%5}));
+				}.bind({adr:stocks[Math.floor((i-start)/5)],cell:(i-start)%5}));
 			}
 			
 			web3.eth.getAccounts(function(error, accounts) {
@@ -643,9 +740,11 @@
 		return (new Array(length+1).join(pad)+string).slice(-length);
 	}
 
+	balances=new Array(32);
+
 	function tableupdate() {
-		for(var i=0;i<scams.length;i++){
-			var contract = web3.eth.contract(abi).at(scams[i]);
+		for(var i=0;i<stocks.length;i++){
+			var contract = web3.eth.contract(abi).at(stocks[i]);
 			
 			contract.balanceOf(web3.eth.defaultAccount, function(e, r) {
 				if(r>0)table.rows[scamrows[this.i]].cells[2].innerHTML="<b>"+((r / 1e18*1000).toFixed(4) + " EPY</b>");
@@ -660,14 +759,16 @@
 
 			contract.buyPrice(function(e, r) {
 				let buyPrice = (1/(convertWeiToEth(r) * .9)/1000000).toFixed(6)
-				table.rows[scamrows[this.i]].cells[8].innerHTML=(buyPrice + " ETH");        
-				if(scams[this.i]==pumpadr)document.getElementById("pumpbuy").innerHTML=buyPrice+" ETH";
+				table.rows[scamrows[this.i]].cells[8].innerHTML=(buyPrice + " ETH");
+				
+				if(stocks[this.i]==pumpadr)document.getElementById("pumpbuy").innerHTML=buyPrice+" ETH";
 			}.bind({i:i}));
 
 			contract.sellPrice(function(e, r) {
 				let sellPrice = convertWeiToEth(r).toFixed(6)
 				table.rows[scamrows[this.i]].cells[9].innerHTML=(sellPrice + " ETH");
-				if(scams[this.i]==pumpadr)document.getElementById("pumpsell").innerHTML=sellPrice+" ETH";
+				
+				if(stocks[this.i]==pumpadr)document.getElementById("pumpsell").innerHTML=sellPrice+" ETH";
 			}.bind({i:i}));
 
 			contract.dividends(web3.eth.defaultAccount, function(e, r) {
@@ -676,8 +777,12 @@
 			}.bind({i:i}));
 
 			web3.eth.getBalance(contract.address, function(e, r) {
-				table.rows[scamrows[this.i]].cells[11].innerHTML=(convertWeiToEth(r).toFixed(4))+" ETH";
-				if(scams[this.i]==pumpadr)document.getElementById("pumpbalance").innerHTML=(convertWeiToEth(r).toFixed(4))+" ETH";
+				//table.rows[scamrows[this.i]].cells[11].innerHTML=(convertWeiToEth(r).toFixed(4))+" ETH";
+				balances[this.i]=convertWeiToEth(r);
+				
+				document.getElementById("marketcap-"+this.i).innerHTML=(convertWeiToEth(r).toFixed(4))+" ETH";
+				
+				if(stocks[this.i]==pumpadr)document.getElementById("pumpbalance").innerHTML=(convertWeiToEth(r).toFixed(4))+" ETH";
 			}.bind({i:i}));
 			
 			contract.totalSupply(function(e, r) {
@@ -689,9 +794,22 @@
 		var timeleft=timeend-(new Date().getTime()/1000)+timesync;
 		var minutes = Math.floor(timeleft / 60);
 		var seconds = Math.floor(timeleft % 60);
-		document.getElementById("pumprem").innerHTML="Remaining: "+leftpad(minutes,'0',2)+":"+leftpad(seconds,'0',2);
 		
-		if(timeleft<0)updatepump();
+		
+		if(timeleft<0){
+			var timeleft=timenext-(new Date().getTime()/1000)+timesync;
+			var hours = Math.floor(timeleft / 3600);
+			var minutes = Math.floor((timeleft % 3600)/60);
+			var seconds = Math.floor((timeleft % 3600) % 60);
+			
+			document.getElementById("pumptable").style.display = "none";
+			document.getElementById("pumpbtn").style.display = "none";
+			
+			document.getElementById("pumprem").innerHTML="Next pump: "+leftpad(hours,'0',2)+":"+leftpad(minutes,'0',2)+":"+leftpad(seconds,'0',2);
+		}
+		else document.getElementById("pumprem").innerHTML="Remaining: "+leftpad(minutes,'0',2)+":"+leftpad(seconds,'0',2);
+		
+		if(timenext<((new Date().getTime()/1000)+timesync))updatepump();
 		
 		var sumtok=0,sumdiv=0,sumval=0;
 		for(var i=1;i<table.rows.length;i++){
@@ -717,11 +835,23 @@
 			var i;
 			for (i = 1; i < (rows.length - 1); i++) {
 				shouldSwitch = false;
+				
 				x = rows[i].cells[sortby];
 				y = rows[i + 1].cells[sortby];
 				
-				var f1=parseFloat(x.innerHTML);
-				var f2=parseFloat(y.innerHTML);
+				var f1=0;
+				var f2=0;
+				if(sortby==11){
+					var a,b;
+					for(var j=0;j<stocks.length;j++)if(scamrows[j]==i){a=j;break;}
+					for(var j=0;j<stocks.length;j++)if(scamrows[j]==i+1){b=j;break;}
+				
+					f1 = balances[a];
+					f2 = balances[b];
+				}else{
+					f1=parseFloat(x.innerHTML);
+					f2=parseFloat(y.innerHTML);
+				}
 				
 				if(asc){
 					if(!isNaN(f1)&&!isNaN(f2)){
@@ -740,8 +870,8 @@
 				switching = true;
 				
 				var a,b;
-				for(var j=0;j<scams.length;j++)if(scamrows[j]==i){a=j;break;}
-				for(var j=0;j<scams.length;j++)if(scamrows[j]==i+1){b=j;break;}
+				for(var j=0;j<stocks.length;j++)if(scamrows[j]==i){a=j;break;}
+				for(var j=0;j<stocks.length;j++)if(scamrows[j]==i+1){b=j;break;}
 				
 				scamrows[a]++;
 				scamrows[b]--;
@@ -803,8 +933,7 @@
 	</script>
 	
 	<div style="margin-top: 25px; margin-bottom: 25px">
-		I have cancer, donate some ETH for medical expenses pls: <b style="cursor: pointer" onclick="send()">0x5db1C3bF9d068A284a8455ce7649870f6ca12584</b><br>
-		Seriously dude, you are probably rich thanks to my site and all these cool ponzi schemes, be a man
+		Consider donating to help cover the server costs: <b style="cursor: pointer" onclick="send()">0x5db1C3bF9d068A284a8455ce7649870f6ca12584</b><br>
 	</div>
 	
 	<font size="1"><endora></font>
