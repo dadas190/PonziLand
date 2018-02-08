@@ -7,7 +7,7 @@
 	<meta http-equiv="pragma" content="no-cache" />
 
 	<meta charset="UTF-8">
-	<title>PonziLand</title>
+	<title>Stocks</title>
 	<style type="text/css">
 		a {
 			display: inline-block;
@@ -106,7 +106,7 @@
 		a.tooltip:hover {text-decoration:none;} 
 		a.tooltip span {
 			z-index:10;display:none; padding:14px 20px;
-			margin-top:-150px; margin-left:-600px;
+			margin-top:-150px; margin-left:-580px;
 			width:300px; line-height:16px;
 		}
 		a.tooltip:hover span{
@@ -125,7 +125,6 @@
 	</style>
 </head>
 <body>
-
 	<script src="http://www.chartjs.org/dist/2.7.1/Chart.bundle.js"></script>
     <script src="http://www.chartjs.org/samples/latest/utils.js"></script>
 
@@ -140,6 +139,37 @@
 		
 		<a target="_blank" href='http://discord.gg/D9s4P6' style="position:absolute; top:10px; right:24px;">
 			<img src='https://lh3.googleusercontent.com/_4zBNFjA8S9yjNB_ONwqBvxTvyXYdC7Nh1jYZ2x6YEcldBr2fyijdjM2J5EoVdTpnkA=w300' width=64/>
+		</a>
+		
+		<a target="_blank" href='https://metamask.io/' style="position:absolute; top:10px; right:120px;">
+			<img src='https://buy.coinbase.com/static/images/Metamask@2x.png' width=64/>
+		</a>
+		
+		<a href="#" class="tooltip" style="position:absolute; top:10px; left:150px;">
+			<img src="https://knowledge.cryptoplanet.in/wp-content/uploads/2017/08/faq-icon.png" width=80/>
+			<span style="margin-top:50px; margin-left:-40px;font-size:14px;line-height:16px;">
+				<strong>Frequently Asked Questions</strong><br>
+				In order to use this website, your browser needs to have the browser extension MetaMask installed.<br><br>
+				After that, you will see numerous stocks available for purchase in the table below.
+				There are multiple actions that you can do with each stock:<br>
+				<div style="text-align:left;">
+					1. Buy - purchase shares at the current buy rate.<br>
+					2. Sell - sell your shares at the current sell rate - ETH will be deposited into your dividends.<br>
+					3. Withdraw - withdraw your dividends into your Ethereum account.<br>
+					4. Reinvest - purchase shares using ETH using your dividends for the current stock.<br>
+					5. Get out - sell your shares and withdraw dividends immediately.<br><br>
+					
+					Each time a share is purchased, the rate for subsequent purchases will be increased by 0.25%.<br>
+					This means that the less shares are in circulation, the more shares will you get for the same amount of ETH.<br>
+					Additionally, each time a share is bought or sold, 10% from the transaction will be shared between all shareholders as a dividend.<br><br>
+					Therefore, you can earn money in multiple ways:<br>
+					1. Buy low, sell high - classic.<br>
+					2. Buy and hold - get money from dividends when price fluctuates.<br><br>
+					Good luck.
+				</div>
+				
+				
+			</span>
 		</a>
 		
 		<h5 style="position:absolute; top:50px; right:10px;">Join our Discord!</h5>
@@ -584,7 +614,12 @@
 				var times=new Array(lines.length);
 				for(var i=0;i<lines.length-1;i++){
 					var data=lines[i].split(' ');
-					times[i]=data[0];
+					var convert=new Date(data[0]*1000);
+					
+					var hours = convert.getHours();
+					var minutes = "0" + convert.getMinutes();
+					
+					times[i]=hours+":"+minutes.substr(-2);
 					
 					for(var j=0;j<stocks.length;j++)charts[data[1+j*2]].push(data[2+j*2]);
 				}
@@ -663,7 +698,6 @@
 	
 	function init(){
 		updatepump();
-		updategraphs();
 		
 		if((typeof web3)=='undefined'){
 		  table.style.display = "none";
@@ -688,6 +722,9 @@
 				table.rows[i+1].cells[12].innerHTML="<button style='background-color: #2196F3;'>Get out</button>";
 				scamrows[i]=i+1;
 			}
+			
+			updategraphs();
+			updategraphs();
 
 			var bns = document.getElementsByTagName("button");
 			var start=0;
@@ -729,7 +766,7 @@
 		xhr.onreadystatechange = function() {
 			if (xhr.readyState == XMLHttpRequest.DONE) { }
 		}
-		xhr.open('GET', 'log.php?tx='+tx, true);
+		xhr.open('GET', 'log.php?tx='+tx+'&name='+chat.myUser.username, true);
 		xhr.send(null);
 		
 		//I just want to see how much money was sent thru my website
