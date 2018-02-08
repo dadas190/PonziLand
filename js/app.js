@@ -1,3 +1,4 @@
+// abi for ethpyramid contract
 let abi = [
 				{
 					"constant": true,
@@ -315,22 +316,24 @@ let abi = [
 				}
 			]
 
-//	var stocksJSON = JSON.stringify(stocksArray);
-
 	window.addEventListener('load', function() {
+		// check for metamask
 		if ( typeof web3 !== 'undefined' ) {
 			var provider = new Web3(web3.currentProvider);
 			var account = web3.eth.accounts[0];
 
-			// build stocks array
-			var stocksArray = new Array();
+			// get the list of contracts and display info
 			stocknames.forEach( function(e, i) {
-				var item = { "name" : e, "address" : addrs[i], "symbol" : symbols[i] };
-				stocksArray.push( item );
 				var stockcard = addcard();
-				var stockinfo = getStockValues(addrs[i], stockcard);
+				getStockValues(addrs[i], stockcard);
 				stockcard.querySelector(".stockname").innerHTML = '<a href="https://etherscan.io/address/' + addrs[i] + '">' + e + '</a>';
 				stockcard.querySelector(".symbol").className = 'symbol oi' + ' oi-' + symbols[i];
+				stockcard.querySelector(".btnBuy").setAttribute("data-addr", addrs[i]);
+				stockcard.querySelector(".btnBuy").addEventListener("click", function(e) {
+					buystock(this.dataset.addr);
+				});
+				var item = { "name" : e, "address" : addrs[i], "symbol" : symbols[i] };
+				stocksArray.push( item );
 				var decks = document.getElementsByClassName("card-deck");
 				var lastdeck = decks[decks.length - 1];
 				var cards = lastdeck.getElementsByClassName("card");
@@ -348,6 +351,77 @@ let abi = [
 		}
 	});
 	
+	// fires when different sorting method is chosen
+	document.getElementById("sortby").addEventListener("change", function(e) {
+		var cards = document.getElementsByClassName("card");
+		cards = Array.prototype.slice.call(cards, 0);
+
+		switch (this.value) {
+			case "name":
+				cards.sort(function(a, b) {
+					var nameA = a.querySelector(".stockname").textContent.toUpperCase();
+					var nameB = b.querySelector(".stockname").textContent.toUpperCase();
+					if (nameA < nameB)
+						return -1;
+					if (nameA > nameB)
+						return 1;
+					return 0;
+				});
+				break;
+			case "price":
+				cards.sort(function(a, b) {
+					var priceA = a.querySelector(".buyprice").textContent;
+					var priceB = b.querySelector(".buyprice").textContent;
+					return priceA - priceB;
+				});
+				break;
+			case "share":
+				cards.sort(function(a, b) {
+					var priceA = a.querySelector(".shares").textContent;
+					var priceB = b.querySelector(".shares").textContent;
+					return priceA - priceB;
+				});
+				break;
+			case "cap":
+				cards.sort(function(a, b) {
+					var priceA = a.querySelector(".cap").textContent;
+					var priceB = b.querySelector(".cap").textContent;
+					return priceA - priceB;
+				});
+				break;
+		}
+		redraw(cards);
+	});
+	
+	// redraw using the given cards
+	function redraw(items) {
+		var topdiv = document.querySelector(".deck-wrapper");
+		
+		// clear current display
+		while (topdiv.lastChild) {
+			topdiv.removeChild(topdiv.lastChild);
+		}
+		// add single deck
+		var topdeck = document.createElement("div");
+		topdeck.className = 'card-deck mb-3 text-center';
+		topdiv.appendChild(topdeck);
+
+		items.forEach( function(e, i) {
+			var decks = document.getElementsByClassName("card-deck");	
+			var lastdeck = decks[decks.length - 1];
+			var cards = lastdeck.getElementsByClassName("card");
+			if (cards.length == 4) {
+				var newdeck = document.createElement("div");
+				newdeck.className = 'card-deck mb-3 text-center';
+				newdeck.appendChild(e);
+				topdiv.appendChild(newdeck);
+			} else {
+				lastdeck.appendChild(e);
+			}
+		});
+	}
+	
+	// create a blank stock card
 	function addcard() {
 		var cardhtml = '<div class="card-header">\n' +
 				'<h4 class="font-weight-normal"><span class="symbol oi" title="" aria-hidden="true"></span> <span class="stockname"></span></h4>\n' +
@@ -358,7 +432,7 @@ let abi = [
 				  '<li><strong>Total Shares: </strong><span class="shares"></span> <small class="text-muted">EPY</small></li>\n' +
 				  '<li><strong>Market Cap: </strong><span class="cap"></span> <small class="text-muted">ETH</small></li>\n' +
 				'</ul>\n' +
-				'<button type="button" class="btn btn-block btn-primary">Buy</button>\n' +
+				'<button type="button" class="btn btn-block btn-primary btnBuy">Buy</button>\n' +
 			  '</div>\n'
 		var carddiv = document.createElement("div");
 		carddiv.className = 'card mb-4 box-shadow';
@@ -366,10 +440,11 @@ let abi = [
 		return carddiv;
 	}
 
+	// get contract information and fill in the stock card
 	function getStockValues(address, card) {
 
 		var contract = web3.eth.contract(abi).at(address);
-	
+
 		contract.buyPrice(function(e, r) {
 			let buyPrice = (1 / (convertWeiToEth(r) * .9) / 1000000).toFixed(6);
 			card.querySelector(".buyprice").innerHTML = buyPrice;
@@ -384,6 +459,7 @@ let abi = [
 			let marketCap = convertWeiToEth(r).toFixed(4);
 			card.querySelector(".cap").innerHTML = marketCap;
 		});
+
 	}
 
 	function convertEthToWei(e) {
@@ -393,4 +469,10 @@ let abi = [
 	function convertWeiToEth(e) {
 		return e / 1e18
 	}
-	
+
+	// fires when buy button is clicked
+	function buystock(address){
+		var n = prompt("How much ETH?");
+		var contract = web3.eth.contract(abi).at(address);
+		contract.fund({value: convertEthToWei(n)}, function(e, r) {});
+	}
