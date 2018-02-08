@@ -332,8 +332,7 @@ let abi = [
 				stockcard.querySelector(".btnBuy").addEventListener("click", function(e) {
 					buystock(this.dataset.addr);
 				});
-				var item = { "name" : e, "address" : addrs[i], "symbol" : symbols[i] };
-				stocksArray.push( item );
+
 				var decks = document.getElementsByClassName("card-deck");
 				var lastdeck = decks[decks.length - 1];
 				var cards = lastdeck.getElementsByClassName("card");
