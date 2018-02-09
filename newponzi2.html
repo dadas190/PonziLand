@@ -6,7 +6,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>Game of Stocks</title>
+    <title>CryptoStocks</title>
 
     <!-- Bootstrap core CSS -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
@@ -15,20 +15,25 @@
   </head>
 
   <body>
-
     <div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom box-shadow">
-      <h5 class="my-0 mr-md-auto font-weight-normal">Game of Stocks</h5>
+      <h5 class="my-0 mr-md-auto font-weight-normal">CryptoStocks</h5>
       <nav class="my-2 my-md-0 mr-md-3">
         <a class="p-2 text-dark" href="#">About</a>
         <a class="p-2 text-dark" href="#">Stocks</a>
         <a class="p-2 text-dark" href="#">My Portfolio</a>
-        <a class="p-2 text-dark" href="FAQ.html">FAQ</a>
+        <a class="p-2 text-dark" href="faq.html">FAQ</a>
       </nav>
     </div>
 
     <div class="px-3 py-3 pt-md-5 pb-md-4 mx-auto text-center">
-      <h1>Game of Stocks</h1>
-      <p class="lead">Choose your stock and watch it grow.</p>
+      <h1>CryptoStocks</h1>
+      <p class="lead">Buy low, sell high or HODL to collect dividends.</p>
+	  
+	  <br><br>
+	  <h4>PUMP OF THE DAY</h4>
+	  <div id='pump' style="margin:auto;width:50%;text-align:center">
+	
+	  </div>
     </div>
 
     <div class="container">
@@ -38,8 +43,16 @@
 			<option disabled selected>--Select--</option>
 			<option value="name">Name</option>
 			<option value="price">Buy Price</option>
+			<option value="price">Sell Price</option>
 			<option value="share">Total Shares</option>
 			<option value="cap">Market Cap</option>
+			<option value="usershares">Your Shares</option>
+			<option value="dividends">Dividends</option>
+			<option value="uservalue">Share Value</option>
+		</select>
+		<select class="col-2 form-control" id="ascdesc">
+			<option value="ascent" selected>Ascending</option>
+			<option value="descent">Descending</option>
 		</select>
 	  </div>
 	  <div class="deck-wrapper">
@@ -54,6 +67,8 @@
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
 <!--    <script src="js/popper.min.js"></script>-->
+	<script src="http://www.chartjs.org/dist/2.7.1/Chart.bundle.js"></script>
+    <script src="http://www.chartjs.org/samples/latest/utils.js"></script>
     <script src="js/bootstrap.min.js"></script>
 	<script src="js/web3.min.js"></script>
 	<script src="js/stocks.js"></script>
