@@ -322,24 +322,30 @@ let abi = [
 		// check for metamask
 		if ( typeof web3 !== 'undefined' ) {
 			var provider = new Web3(web3.currentProvider);
-			var account = web3.eth.accounts[0];
+			web3.eth.getAccounts(function(error, accounts) {
+				// check if user is logged into metamask
+				if (accounts.length == 0){
+					document.getElementById("metamask-login").style.display = "block";
+				} else {
+					web3.eth.defaultAccount = accounts[0];
+				}
+			});
 
 			// get the list of contracts and display info
 			stocknames.forEach( function(e, i) {
-				var stockcard = addcard();
+				// create a card and fill out info
+				var stockcard = addcard(i);
 				stockcards[i]=stockcard;
-				getStockValues(addrs[i], stockcard);
-				//stockcard.querySelector(".stockname").innerHTML = '<a href="https://etherscan.io/address/' + addrs[i] + '">' + e + '</a>';
+				getStockValues(addrs[i], stockcard, i);
 				stockcard.querySelector(".stockname").innerHTML = '<a href="https://etherscan.io/address/'+addrs[i]+'" class="tooltipx"><span><canvas id="marketcanvas-'+i+'" style="float:right"></canvas></span>'+e+'</a>';
 				stockcard.querySelector(".symbol").className = 'symbol oi' + ' oi-' + symbols[i];
-				console.log("TEST");
-				
 				stockcard.querySelector(".btnBuy").addEventListener("click", function(e) { buystock(addrs[i]);	});
 				stockcard.querySelector(".btnSell").addEventListener("click", function(e) { sellstock(addrs[i]); });
 				stockcard.querySelector(".btnReinvest").addEventListener("click", function(e) { reinvest(addrs[i]); });
 				stockcard.querySelector(".btnWithdraw").addEventListener("click", function(e) { withdraw(addrs[i]); });
 				stockcard.querySelector(".btnGTFO").addEventListener("click", function(e) { GTFO(addrs[i]); });
 
+				// create card-deck as necessary and add cards to it
 				var decks = document.getElementsByClassName("card-deck");
 				var lastdeck = decks[decks.length - 1];
 				var cards = lastdeck.getElementsByClassName("card");
@@ -352,12 +358,15 @@ let abi = [
 					lastdeck.appendChild(stockcard);
 				}
 			});
+			// show user's stock values
+			document.getElementById("accntStats").style.display = "block";
+			
 			setInterval(tableupdate, 1001);
 			updatepump();
 			updategraphs();
 			
 		} else {
-			console.log('No MetaMask');
+			document.getElementById("no-metamask").style.display = "block";
 		}
 	});
 	
@@ -457,7 +466,8 @@ let abi = [
 	}
 	
 	function tableupdate(){
-		stockcards.forEach(function(e,i){getStockValues(addrs[i],e);});
+
+		stockcards.forEach(function(e,i){getStockValues(addrs[i],e,i);});
 		
 		var pumpdiv=document.getElementById("pump");
 		
@@ -487,12 +497,25 @@ let abi = [
 				pumpdiv.innerHTML="Next pump: "+hours+":"+minutes+":"+seconds;
 			}
 		}
+
+		var totals = { shares : 0, value: 0, divs: 0 };
+		stockcards.forEach( function(c, i) {
+			var share = parseFloat(c.querySelector(".usershares").textContent);
+			var val = parseFloat(c.querySelector(".uservalue").textContent);
+			var div = parseFloat(c.querySelector(".dividends").textContent);
+			
+			if (!isNaN(share)) totals.shares += share;
+			if (!isNaN(val)) totals.value += val;
+			if (!isNaN(div)) totals.divs += div;
+		});
 		
-		//pumpdiv.innerHTML="kek";
+		document.getElementById("totShare").innerHTML = totals.shares.toFixed(4);
+		document.getElementById("totVal").innerHTML = totals.value.toFixed(4);
+		document.getElementById("totDiv").innerHTML = totals.divs.toFixed(4);
+
 	}
 	
 	// fires when different sorting method is chosen
-	
 	function sort(e) {
 		var cards = document.getElementsByClassName("card");
 		cards = Array.prototype.slice.call(cards, 0);
@@ -502,9 +525,7 @@ let abi = [
 		
 		var sort=sortby.options[sortby.selectedIndex].value;
 		var order=ascdesc.options[ascdesc.selectedIndex].value;
-		
-		
-		
+
 		console.log("SORT BY "+sort+" "+order);
 		switch (sort) {
 			case "name":
@@ -577,6 +598,17 @@ let abi = [
 	document.getElementById("sortby").addEventListener("change", sort);
 	document.getElementById("ascdesc").addEventListener("change", sort);
 	
+	// mystocks checkbox filter
+	document.getElementById("mystocks").addEventListener("change", function(e) {
+		if (e.target.checked) {
+			redraw(stockcards.filter(function(card) {
+				return card.mine;
+			}));
+		} else {
+			redraw(stockcards);
+		}
+	});
+	
 	// redraw using the given cards
 	function redraw(items) {
 		var topdiv = document.querySelector(".deck-wrapper");
@@ -606,7 +638,7 @@ let abi = [
 	}
 	
 	// create a blank stock card
-	function addcard() {
+	function addcard(i) {
 		var cardhtml = '<div class="card-header">\n' +
 				'<h4 class="font-weight-normal"><span class="symbol oi" title="" aria-hidden="true"></span> <span class="stockname"></span></h4>\n' +
 			  '</div>\n' +
@@ -617,7 +649,7 @@ let abi = [
 				  '<li><strong>Market Cap: </strong><span class="cap"></span> <small class="text-muted">ETH</small></li>\n' +
 				  '<li><strong>Buy cost: </strong><span class="buycost"></span> <small class="text-muted">ETH</small></li>\n' +
 				  '<li><strong>Sell cost: </strong><span class="sellcost"></span> <small class="text-muted">ETH</small></li>\n' +
-				  '<li><strong>Your shares: </strong><span class="usershares"></span> <small class="text-muted">ETH</small></li>\n' +
+				  '<li><strong>Your shares: </strong><span class="usershares"></span> <small class="text-muted">EPY</small></li>\n' +
 				  '<li><strong>Share value: </strong><span class="uservalue"></span> <small class="text-muted">ETH</small></li>\n' +
 				  '<li><strong>Dividends: </strong><span class="dividends"></span> <small class="text-muted">ETH</small></li>\n' +
 				'</ul>\n' +
@@ -626,15 +658,17 @@ let abi = [
 				'<button type="button" class="btn btn-block btn-primary btnReinvest" style="background-color: #ff9800">Reinvest</button>\n'+
 				'<button type="button" class="btn btn-block btn-primary btnWithdraw" style="background-color: #008CBA">Withdraw</button>\n'+
 				'<button type="button" class="btn btn-block btn-primary btnGTFO">Get out</button>\n'+
-			  '</div>\n'
+			  '</div>\n';
+
 		var carddiv = document.createElement("div");
-		carddiv.className = 'card mb-4 box-shadow';
+		carddiv.id = "stock" + i;
+		carddiv.className = 'card border-dark mb-2 box-shadow';
 		carddiv.innerHTML = cardhtml;
 		return carddiv;
 	}
 
 	// get contract information and fill in the stock card
-	function getStockValues(address, card) {
+	function getStockValues(address, card, index) {
 
 		var contract = web3.eth.contract(abi).at(address);
 
@@ -660,7 +694,15 @@ let abi = [
 		
 		contract.balanceOf(web3.eth.defaultAccount, function(e, r) {
 			let usershares = (r / 1e18*1000).toFixed(4);
-			if(usershares!="0.0000")usershares="<b>"+usershares+"</b>";
+
+			// turn on mine flag if user holds some shares
+			if (usershares!="0.0000") {
+				usershares = "<b>" + usershares + "</b>";
+				stockcards[index].mine = true;
+			} else {
+				stockcards[index].mine = false;
+			}
+
 			card.querySelector(".usershares").innerHTML = usershares;
 			
 			contract.getEtherForTokens(r, function(e, r) {
@@ -669,7 +711,7 @@ let abi = [
 				card.querySelector(".uservalue").innerHTML = uservalue;
 			});
 		});
-		
+
 		contract.dividends(web3.eth.defaultAccount, function(e, r) {
 			let dividends=convertWeiToEth(r).toFixed(4);
 			if(dividends!="0.0000")dividends="<b>"+dividends+"</b>";
@@ -697,7 +739,8 @@ let abi = [
 	function buystock(address){
 		var n = prompt("How much ETH?");
 		var contract = web3.eth.contract(abi).at(address);
-		contract.fund({value: convertEthToWei(n)}, function(e, r) { console.log(e, r); });
+		if (n != null) // don't execute if cancel is clicked
+			contract.fund({value: convertEthToWei(n)}, function(e, r) { console.log(e, r); });
 	}
 	
 	function sellstock(address){
